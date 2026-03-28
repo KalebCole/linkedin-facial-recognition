@@ -60,6 +60,7 @@ FRAME_TYPE_AUDIO = 0x01
 FRAME_TYPE_IMAGE = 0x02
 FRAME_TYPE_VIDEO_H264 = 0x03
 FRAME_TYPE_AUDIO_AAC = 0x04
+FRAME_TYPE_AUDIO_POST_ALG = 0x05  # Post-algorithm PCM (noise-suppressed, ch 0/1)
 
 INTERMEDIATE_DATA_DIR = Path(__file__).resolve().parent / "intermediate_data"
 
@@ -555,6 +556,7 @@ async def bridge(glasses_ws: websockets.ServerConnection) -> None:
     h264_buffer: list[bytes] = []
     aac_buffer: list[bytes] = []   # AAC ADTS frames from 0x04
     pcm_buffer: list[bytes] = []   # raw PCM from 0x01 (fallback)
+    post_alg_buffer: list[bytes] = []  # post-algorithm PCM from 0x05 (noise-suppressed, for enrollment)
     h264_config: Optional[bytes] = None
     buffer_lock = Lock()
     loop = asyncio.get_event_loop()
@@ -617,29 +619,8 @@ async def bridge(glasses_ws: websockets.ServerConnection) -> None:
     STATS_INTERVAL = 2.0
 
     save_task: Optional[asyncio.Task] = None
-    sender_task: Optional[asyncio.Task] = None
     try:
         save_task = asyncio.create_task(save_clip_every_interval())
-
-        async def mock_data_sender() -> None:
-            """Periodically send mock JSON data to the glasses."""
-            import json
-            count = 0
-            while True:
-                await asyncio.sleep(2.0)
-                count += 1
-                payload = {
-                    "type": "mock_data",
-                    "message": f"Hello from server! This is message #{count}",
-                    "timestamp": time.time()
-                }
-                try:
-                    await glasses_ws.send(json.dumps(payload))
-                except Exception as e:
-                    log.warning("mock_data_sender failed: %s", e)
-                    break
-                    
-        sender_task = asyncio.create_task(mock_data_sender())
 
         async for message in glasses_ws:
             if isinstance(message, str):
@@ -696,6 +677,13 @@ async def bridge(glasses_ws: websockets.ServerConnection) -> None:
                         first_aac = False
                     with buffer_lock:
                         aac_buffer.append(payload)
+                elif frame_type == FRAME_TYPE_AUDIO_POST_ALG:
+                    # Post-algorithm audio (noise-suppressed) — best for speech recognition
+                    post_alg_buffer.append(payload)
+                    # Keep last ~15 seconds of audio (16kHz * 2 bytes * 15s = 480KB)
+                    max_chunks = 240  # ~15s at typical chunk sizes
+                    if len(post_alg_buffer) > max_chunks:
+                        post_alg_buffer[:] = post_alg_buffer[-max_chunks:]
                 elif frame_type == FRAME_TYPE_VIDEO_H264:
                     if first_video:
                         log.info("[stream_only] first 0x03 (video), len=%d (stored as config)", len(payload))
@@ -772,12 +760,6 @@ async def bridge(glasses_ws: websockets.ServerConnection) -> None:
             save_task.cancel()
             try:
                 await save_task
-            except asyncio.CancelledError:
-                pass
-        if sender_task and not sender_task.done():
-            sender_task.cancel()
-            try:
-                await sender_task
             except asyncio.CancelledError:
                 pass
         log.info("Glasses disconnected: %s", client_addr)
