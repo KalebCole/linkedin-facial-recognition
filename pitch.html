@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>People Memory — Spherex</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #0a0a0a;
+  --green: #00FF41;
+  --green-dim: #00cc34;
+  --green-glow: 0 0 20px rgba(0,255,65,0.4), 0 0 60px rgba(0,255,65,0.15);
+  --text: #e0e0e0;
+  --muted: #888;
+}
+html { scroll-behavior: auto; overflow: hidden; }
+body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; overflow: hidden; }
+
+/* Slides */
+.deck { position: relative; width: 100vw; height: 100vh; }
+.slide {
+  position: absolute; top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  padding: 60px 80px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.5s ease;
+  text-align: center;
+}
+.slide.active { opacity: 1; pointer-events: auto; }
+
+/* Progress bar */
+#progress {
+  position: fixed; top: 0; left: 0; height: 3px;
+  background: var(--green);
+  box-shadow: var(--green-glow);
+  transition: width 0.4s ease;
+  z-index: 100;
+}
+
+/* Slide dots */
+#dots {
+  position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 12px; z-index: 100;
+}
+#dots span {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  transition: all 0.3s ease; cursor: pointer;
+}
+#dots span.active {
+  background: var(--green);
+  box-shadow: 0 0 8px rgba(0,255,65,0.6);
+  transform: scale(1.3);
+}
+
+/* Slide counter */
+#counter {
+  position: fixed; bottom: 34px; right: 40px;
+  font-family: 'Space Mono', monospace; font-size: 13px;
+  color: var(--muted); z-index: 100;
+}
+
+/* Typography */
+h1 { font-size: clamp(2.5rem, 5vw, 4.5rem); font-weight: 800; line-height: 1.1; margin-bottom: 24px; }
+h2 { font-size: clamp(1.8rem, 3.5vw, 3rem); font-weight: 700; line-height: 1.2; margin-bottom: 20px; }
+.subtitle { font-size: clamp(1.1rem, 2vw, 1.5rem); color: var(--muted); font-weight: 300; max-width: 700px; line-height: 1.6; }
+.green { color: var(--green); }
+.glow { color: var(--green); text-shadow: var(--green-glow); }
+.big-number {
+  font-size: clamp(3rem, 7vw, 6rem); font-weight: 900;
+  color: var(--green); text-shadow: var(--green-glow);
+  line-height: 1;
+}
+
+/* HUD mockup */
+.hud {
+  font-family: 'Space Mono', monospace;
+  background: rgba(0,255,65,0.04);
+  border: 1px solid rgba(0,255,65,0.2);
+  border-radius: 12px;
+  padding: 28px 36px;
+  text-align: left;
+  color: var(--green);
+  text-shadow: var(--green-glow);
+  margin-top: 32px;
+  min-width: 320px;
+}
+.hud .hud-name { font-size: 1.6rem; font-weight: 700; margin-bottom: 4px; }
+.hud .hud-role { font-size: 1.1rem; opacity: 0.8; margin-bottom: 2px; }
+.hud .hud-fact { font-size: 1rem; opacity: 0.6; font-style: italic; }
+.hud .hud-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); margin-right: 10px; vertical-align: middle; }
+
+/* Steps */
+.steps {
+  display: flex; gap: 40px; margin-top: 40px; flex-wrap: wrap; justify-content: center;
+}
+.step {
+  flex: 1; min-width: 220px; max-width: 300px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px; padding: 32px 24px;
+  text-align: center;
+}
+.step-num {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.85rem; color: var(--green); letter-spacing: 3px;
+  margin-bottom: 12px; text-transform: uppercase;
+}
+.step-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 8px; }
+.step-desc { font-size: 0.95rem; color: var(--muted); line-height: 1.5; }
+
+/* Tech list */
+.tech-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px 48px; text-align: left; margin-top: 32px;
+  max-width: 800px;
+}
+.tech-item {
+  font-size: 1.1rem; color: var(--text); padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.tech-item .label { color: var(--green); font-weight: 600; }
+.tech-item .mono { font-family: 'Space Mono', monospace; font-size: 0.95rem; }
+
+/* Market stats */
+.stats-row {
+  display: flex; gap: 60px; margin-top: 36px; flex-wrap: wrap; justify-content: center;
+}
+.stat { text-align: center; }
+.stat .big-number { margin-bottom: 8px; }
+.stat .stat-label { font-size: 1rem; color: var(--muted); max-width: 200px; }
+
+/* Traction */
+.traction-list {
+  text-align: left; margin-top: 28px; max-width: 600px;
+}
+.traction-item {
+  display: flex; align-items: center; gap: 14px;
+  font-size: 1.15rem; padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.traction-check {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--green); display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: var(--bg); font-weight: 700; flex-shrink: 0;
+}
+.traction-next .traction-check {
+  background: transparent; border: 2px solid var(--green);
+}
+.traction-next .traction-check::after { content: '→'; color: var(--green); }
+
+/* CTA */
+.cta-brand {
+  font-family: 'Space Mono', monospace;
+  font-size: 1rem; letter-spacing: 6px; text-transform: uppercase;
+  color: var(--green); opacity: 0.5; margin-top: 40px;
+}
+.cta-tagline {
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
+  color: var(--muted); margin-top: 16px; font-weight: 300;
+}
+
+/* Bullets */
+.bullets {
+  text-align: left; margin-top: 16px; max-width: 600px;
+}
+.bullets li {
+  list-style: none; font-size: 1.1rem; color: var(--muted); padding: 6px 0;
+  line-height: 1.5;
+}
+.bullets li::before {
+  content: '▸'; color: var(--green); margin-right: 10px;
+}
+
+/* Key shortcut hint */
+#hint {
+  position: fixed; bottom: 34px; left: 40px;
+  font-family: 'Space Mono', monospace; font-size: 11px;
+  color: rgba(255,255,255,0.15); z-index: 100;
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<div id="dots"></div>
+<div id="counter"></div>
+<div id="hint">← → or Space</div>
+
+<div class="deck">
+
+  <!-- Slide 1: Hook -->
+  <div class="slide active" data-slide="0">
+    <h1>You've met <span class="glow">10,000</span> people.<br>How many can you name?</h1>
+    <p class="subtitle">The average professional forgets names within seconds. Networking events, conferences, work — it's embarrassing, and it costs real relationships.</p>
+  </div>
+
+  <!-- Slide 2: Solution -->
+  <div class="slide" data-slide="1">
+    <h2>People Memory</h2>
+    <h1 class="green" style="font-size:clamp(1.6rem,3vw,2.4rem); font-weight:600; margin-bottom:8px;">Never Forget a Face</h1>
+    <p class="subtitle">AR glasses that remember everyone you meet.<br>Always-on. Zero friction. <strong style="color:#fff;">It just works.</strong></p>
+    <div class="hud">
+      <div class="hud-name"><span class="hud-dot"></span>Sarah Chen</div>
+      <div class="hud-role">PM · Google</div>
+      <div class="hud-fact">Marathon in Antarctica</div>
+    </div>
+  </div>
+
+  <!-- Slide 3: How It Works -->
+  <div class="slide" data-slide="2">
+    <h2>How It Works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01 · Meet</div>
+        <div class="step-title">👓 Capture</div>
+        <div class="step-desc">Camera silently captures a face embedding. No button. No trigger.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02 · Label</div>
+        <div class="step-title">🗣️ Speak</div>
+        <div class="step-desc">"That's Sarah Chen, PM at Google." Natural speech. Done.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03 · Recall</div>
+        <div class="step-title">⚡ Recognize</div>
+        <div class="step-desc">Next encounter: name, role, and fun fact appear instantly on HUD.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 4: The Tech -->
+  <div class="slide" data-slide="3">
+    <h2>The Tech</h2>
+    <div class="tech-grid">
+      <div class="tech-item"><span class="label">Hardware</span><br>Rokid Glasses — <span class="mono">49g</span>, all-day wearable</div>
+      <div class="tech-item"><span class="label">Camera</span><br><span class="mono">12MP</span> Sony sensor, on-device face detection</div>
+      <div class="tech-item"><span class="label">Processor</span><br>Qualcomm AR1 — edge inference</div>
+      <div class="tech-item"><span class="label">Recognition</span><br>FAISS vector search — <span class="mono glow">&lt;500ms</span></div>
+      <div class="tech-item"><span class="label">Privacy</span><br>All on-device/phone. <strong style="color:#fff;">No cloud.</strong></div>
+      <div class="tech-item"><span class="label">Prototype</span><br>Android app + Python server — <span class="green">working</span></div>
+    </div>
+  </div>
+
+  <!-- Slide 5: Market -->
+  <div class="slide" data-slide="4">
+    <h2>Market Opportunity</h2>
+    <div class="stats-row">
+      <div class="stat">
+        <div class="big-number">$42B</div>
+        <div class="stat-label">AR market by 2028<br><span style="color:var(--green)">30%+ CAGR</span></div>
+      </div>
+      <div class="stat">
+        <div class="big-number">900M+</div>
+        <div class="stat-label">professionals on LinkedIn alone</div>
+      </div>
+    </div>
+    <ul class="bullets" style="margin-top:36px;">
+      <li>Conference attendees & networking events</li>
+      <li>Sales teams & executives</li>
+      <li>People with face blindness (prosopagnosia)</li>
+    </ul>
+  </div>
+
+  <!-- Slide 6: Traction -->
+  <div class="slide" data-slide="5">
+    <h2>Traction</h2>
+    <div class="traction-list">
+      <div class="traction-item"><div class="traction-check">✓</div> Working prototype on Rokid Glasses hardware</div>
+      <div class="traction-item"><div class="traction-check">✓</div> Full UX/interaction design spec (v3)</div>
+      <div class="traction-item"><div class="traction-check">✓</div> Server-side face recognition pipeline built</div>
+      <div class="traction-item"><div class="traction-check">✓</div> Android glasses app in development</div>
+      <div class="traction-item traction-next"><div class="traction-check"></div> Beta with 50 users at a real conference</div>
+    </div>
+  </div>
+
+  <!-- Slide 7: The Ask -->
+  <div class="slide" data-slide="6">
+    <h1>Join us in building<br>the future of <span class="glow">human memory</span></h1>
+    <p class="cta-tagline">We're looking for believers, builders, and beta testers.</p>
+    <div class="cta-brand">Spherex</div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let current = 0;
+
+  // Build dots
+  const dotsEl = document.getElementById('dots');
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('span');
+    d.addEventListener('click', () => goTo(i));
+    dotsEl.appendChild(d);
+  }
+
+  function goTo(n) {
+    if (n < 0 || n >= total) return;
+    slides[current].classList.remove('active');
+    current = n;
+    slides[current].classList.add('active');
+    // dots
+    dotsEl.querySelectorAll('span').forEach((d, i) => d.classList.toggle('active', i === current));
+    // progress
+    document.getElementById('progress').style.width = ((current + 1) / total * 100) + '%';
+    // counter
+    document.getElementById('counter').textContent = (current + 1) + ' / ' + total;
+  }
+
+  goTo(0);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowDown') { e.preventDefault(); goTo(current + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); goTo(current - 1); }
+    else if (e.key === 'Home') goTo(0);
+    else if (e.key === 'End') goTo(total - 1);
+  });
+
+  // Touch support
+  let touchX = 0;
+  document.addEventListener('touchstart', e => touchX = e.touches[0].clientX);
+  document.addEventListener('touchend', e => {
+    const diff = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(diff) > 50) goTo(current + (diff < 0 ? 1 : -1));
+  });
+})();
+</script>
+</body>
+</html>
