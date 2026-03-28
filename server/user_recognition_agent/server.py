@@ -28,6 +28,7 @@ import json as json_module
 from .database import init_db, add_person, get_all_persons
 from .recognition import extract_embedding, match_face
 from .decoder import extract_frame_from_h264
+from .transcription import transcribe_and_extract
 
 load_dotenv()
 
@@ -640,9 +641,26 @@ async def bridge(glasses_ws: websockets.ServerConnection) -> None:
                                 lambda f=frame: extract_embedding(f)
                             )
                             if embedding is not None:
-                                name = cmd.get("name", f"Person_{int(time.time())}")
+                                # Try auto-extraction from audio first
+                                name = cmd.get("name")
                                 role = cmd.get("role")
                                 fun_fact = cmd.get("fun_fact")
+
+                                if not name and post_alg_buffer:
+                                    # Use noise-suppressed audio for transcription
+                                    try:
+                                        extracted_name, extracted_role, extracted_fact = await transcribe_and_extract(
+                                            list(post_alg_buffer)
+                                        )
+                                        name = extracted_name or name
+                                        role = extracted_role or role
+                                        fun_fact = extracted_fact or fun_fact
+                                    except Exception as e:
+                                        log.warning("Audio extraction failed: %s", e)
+
+                                # Fallback if still no name
+                                if not name:
+                                    name = f"Person_{int(time.time())}"
                                 person_id = add_person(name, embedding, role, fun_fact)
                                 await glasses_ws.send(json_module.dumps({
                                     "type": "enrolled",
