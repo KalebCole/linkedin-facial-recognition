@@ -1,4 +1,5 @@
 """Audio transcription + name/role/fun_fact extraction using Google Gemini."""
+import asyncio
 import io
 import json
 import logging
@@ -26,12 +27,10 @@ def pcm_to_wav(pcm_chunks: list[bytes], sample_rate: int = SAMPLE_RATE) -> bytes
     return buf.getvalue()
 
 
-async def transcribe_and_extract(pcm_chunks: list[bytes]) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+def _sync_transcribe_and_extract(pcm_chunks: list[bytes]) -> Tuple[Optional[str], Optional[str], Optional[str]]:
     """
-    Transcribe audio and extract name, role, fun_fact using Google Gemini.
-    Returns (name, role, fun_fact) — any can be None if not detected.
-
-    Uses Gemini's multimodal capability to process audio directly.
+    Synchronous version — runs Gemini API calls.
+    Called via run_in_executor to avoid blocking the event loop.
     """
     api_key = os.getenv("GEMINI_API_KEY", "")
     if not pcm_chunks or not api_key:
@@ -42,14 +41,11 @@ async def transcribe_and_extract(pcm_chunks: list[bytes]) -> Tuple[Optional[str]
     try:
         wav_bytes = pcm_to_wav(pcm_chunks)
 
-        # Write WAV to temp file for Gemini upload
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
             f.write(wav_bytes)
             tmp_wav = f.name
 
         client = genai.Client(api_key=api_key)
-
-        # Upload audio file to Gemini
         audio_file = client.files.upload(file=tmp_wav)
 
         response = client.models.generate_content(
@@ -73,9 +69,7 @@ Rules:
             ]
         )
 
-        # Parse the JSON response
         text = response.text.strip()
-        # Remove markdown code blocks if present
         if text.startswith("```"):
             text = text.split("\n", 1)[1] if "\n" in text else text[3:]
         if text.endswith("```"):
@@ -100,3 +94,12 @@ Rules:
                 os.unlink(tmp_wav)
             except OSError:
                 pass
+
+
+async def transcribe_and_extract(pcm_chunks: list[bytes]) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+    """
+    Async wrapper — runs the blocking Gemini API calls in a thread executor
+    so the event loop stays responsive during enrollment.
+    """
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, _sync_transcribe_and_extract, pcm_chunks)
