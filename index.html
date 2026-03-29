@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>People Memory by FaceTag — Never Forget a Face</title>
-<meta name="description" content="AR glasses that remember every person you meet. Always-on face recognition with zero friction. Built for Rokid Glasses by FaceTag.">
+<title>FaceTag — Never Forget a Face</title>
+<meta name="description" content="AR glasses that remember every person you meet. Captures introductions automatically. Built for Rokid Glasses.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -105,7 +105,7 @@ nav .container{display:flex;justify-content:space-between;align-items:center}
 .hud-viewport{position:relative;width:100%;max-width:900px;height:500px;margin:0 auto;border:1px solid rgba(0,255,65,.08);border-radius:24px;overflow:hidden;background:rgba(0,0,0,.6)}
 @media(max-width:600px){.hud-viewport{height:400px;border-radius:16px;margin:0 16px}}
 .hud-viewport::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,65,.01) 2px,rgba(0,255,65,.01) 4px);pointer-events:none;z-index:2}
-.hud-viewport::after{content:'PEOPLE MEMORY v2.1';position:absolute;top:16px;left:20px;font-family:var(--font-mono);font-size:10px;color:rgba(0,255,65,.25);letter-spacing:2px;z-index:3}
+.hud-viewport::after{content:'FACETAG v1.0';position:absolute;top:16px;left:20px;font-family:var(--font-mono);font-size:10px;color:rgba(0,255,65,.25);letter-spacing:2px;z-index:3}
 .hud-status{position:absolute;top:16px;right:20px;font-family:var(--font-mono);font-size:10px;color:rgba(0,255,65,.25);letter-spacing:1px;z-index:3}
 .hud-status .blink{animation:blink 2s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
@@ -199,7 +199,7 @@ footer .container{display:flex;justify-content:space-between;align-items:center;
 <section class="hero">
   <div class="hero-content container">
     <h1 class="reveal">Never Forget<br><span class="accent">a Face</span></h1>
-    <p class="subtitle reveal">AR glasses that silently remember every person you meet — and remind you who they are the moment you see them again.</p>
+    <p class="subtitle reveal">AR glasses that listen when people introduce themselves — and remind you who they are the moment you see them again.</p>
     <div class="cta-row reveal">
       <button class="btn-primary" onclick="document.getElementById('final').scrollIntoView({behavior:'smooth'})">Join the Waitlist</button>
       <button class="btn-ghost" onclick="document.getElementById('demo').scrollIntoView({behavior:'smooth'})">See It In Action</button>
@@ -230,7 +230,7 @@ footer .container{display:flex;justify-content:space-between;align-items:center;
   <div class="container">
     <div class="section-label reveal">How It Works</div>
     <h2 class="section-title reveal">Three seconds. That's all it takes.</h2>
-    <p class="section-sub reveal">No app to open. No button to press. People Memory runs in the background so you can focus on the conversation.</p>
+    <p class="section-sub reveal">No app to open. No button to press. FaceTag runs in the background so you can focus on the conversation.</p>
     <div class="steps">
       <div class="step reveal">
         <span class="step-num">01</span>
@@ -240,9 +240,9 @@ footer .container{display:flex;justify-content:space-between;align-items:center;
       </div>
       <div class="step reveal">
         <span class="step-num">02</span>
-        <span class="step-icon">🗣️</span>
-        <h3>Say Their Name</h3>
-        <p>Just speak naturally: "That's Sarah Chen, PM at Google — she ran a marathon in Antarctica." Done.</p>
+        <span class="step-icon">🤝</span>
+        <h3>They Introduce Themselves</h3>
+        <p>They say their name, what they do, a fun fact — the glasses capture it automatically. No extra steps from you.</p>
         <div class="step-hud">
           <div class="name">● Sarah Chen</div>
           <div class="role">PM · Google</div>
@@ -289,7 +289,7 @@ footer .container{display:flex;justify-content:space-between;align-items:center;
       <div class="d-conf">CONF 97.4%</div>
     </div>
   </div>
-  <div class="hud-demo-label">Simulated HUD View — People Memory v2.1</div>
+  <div class="hud-demo-label">Simulated HUD View — FaceTag v1.0</div>
 </section>
 
 <!-- FEATURES -->
@@ -302,12 +302,12 @@ footer .container{display:flex;justify-content:space-between;align-items:center;
       <div class="feature-card reveal">
         <span class="feature-icon">⚡</span>
         <h3>Always-On, Zero Friction</h3>
-        <p>No app to launch, no button to tap. People Memory runs passively in the background from the moment you put on your glasses.</p>
+        <p>No app to launch, no button to tap. FaceTag runs passively in the background from the moment you put on your glasses.</p>
       </div>
       <div class="feature-card reveal">
         <span class="feature-icon">🎤</span>
-        <h3>Voice-Powered Labeling</h3>
-        <p>Just say a name, role, and a fun fact after meeting someone. Natural speech — no menus, no typing.</p>
+        <h3>Automatic Capture</h3>
+        <p>When someone introduces themselves, the glasses listen and store the details. Their name, role, fun fact — captured from natural conversation.</p>
       </div>
       <div class="feature-card reveal">
         <span class="feature-icon">🔒</span>
@@ -378,7 +378,7 @@ footer .container{display:flex;justify-content:space-between;align-items:center;
 <section class="final-cta" id="final">
   <div class="container">
     <h2 class="reveal">Ready to remember <span class="accent">everyone</span>?</h2>
-    <p class="reveal">Join the waitlist for early access to People Memory.</p>
+    <p class="reveal">Join the waitlist for early access to FaceTag.</p>
     <div class="email-row reveal">
       <input type="email" placeholder="Enter your email">
       <button class="btn-primary">Get Early Access</button>
@@ -388,7 +388,7 @@ footer .container{display:flex;justify-content:space-between;align-items:center;
 
 <footer>
   <div class="container">
-    <div class="footer-brand"><span>FACETAG</span> · People Memory © 2026</div>
+    <div class="footer-brand"><span>FACETAG</span> © 2026</div>
     <ul class="footer-links">
       <li><a href="#">About</a></li>
       <li><a href="#privacy">Privacy</a></li>
